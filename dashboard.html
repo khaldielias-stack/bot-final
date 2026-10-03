@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vinted Bot — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0d11; --bg2:#12141b; --bg3:#191c25; --line:rgba(255,255,255,.07);
+    --teal:#09b1ba; --violet:#a78bfa; --green:#34d399; --red:#f87171; --amber:#fbbf24;
+    --fg:#e3e5f0; --dim:#6b7280; --r:12px;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --sans:'Syne',system-ui,sans-serif;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-padding-top:env(safe-area-inset-top,0px)}
+  body{background:var(--bg);color:var(--fg);font-family:var(--sans);min-height:100%}
+  body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:44px 44px}
+  .wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:26px 20px 90px}
+
+  /* Header */
+  header{display:flex;align-items:center;gap:15px;margin-bottom:26px;padding-bottom:20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .logo{width:42px;height:42px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:19px;
+    background:linear-gradient(135deg,var(--teal),var(--violet))}
+  h1{font-size:21px;font-weight:800;letter-spacing:-.4px}
+  h1 span{color:var(--teal)}
+  .sub{font-size:11.5px;color:var(--dim);font-family:var(--mono);margin-top:2px}
+  .hr{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  #live{font-size:10.5px;font-family:var(--mono);color:var(--dim)}
+  #pill{display:flex;align-items:center;gap:7px;border-radius:99px;padding:5px 13px;font-size:11.5px;font-family:var(--mono);border:1px solid;transition:.3s}
+  #pill.running{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.3);color:var(--green)}
+  #pill.paused{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3);color:var(--amber)}
+  #pill.connecting{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3);color:var(--amber)}
+  #pill.stopped{background:rgba(107,114,128,.1);border-color:rgba(107,114,128,.3);color:var(--dim)}
+  #pill.error{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .running .dot{animation:bl 1.6s infinite}
+  @keyframes bl{0%,100%{opacity:1}50%{opacity:.25}}
+
+  #offline{display:none;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.22);border-radius:var(--r);
+    padding:13px 17px;font-size:12.5px;color:var(--amber);font-family:var(--mono);margin-bottom:22px;line-height:1.6}
+  #offline.on{display:block}
+  code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:4px}
+
+  .sec{font-size:9.5px;font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:11px}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:26px}
+  .st{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  .sv{font-size:27px;font-weight:800;line-height:1;margin-bottom:4px;font-variant-numeric:tabular-nums}
+  .sl{font-size:10.5px;color:var(--dim);font-family:var(--mono)}
+  .st.a .sv{color:var(--teal)} .st.b .sv{color:var(--green)} .st.c .sv{color:var(--violet)}
+  .st.d .sv{color:var(--amber)} .st.e .sv{color:var(--fg)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:26px}
+  .card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:19px}
+  .ct{font-size:12.5px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+  .ct .n{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--dim);font-weight:400}
+
+  /* Recherches */
+  .srch{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .srch:last-child{border-bottom:none;padding-bottom:0}
+  .sd{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+  .sd.on{background:var(--green);box-shadow:0 0 7px rgba(52,211,153,.55)}
+  .sd.off{background:var(--dim)}
+  .sn{font-size:12.5px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .iv{font-family:var(--mono);font-size:10px;color:var(--teal);background:rgba(9,177,186,.09);
+    border:1px solid rgba(9,177,186,.25);border-radius:4px;padding:1px 6px;font-weight:400}
+  .tags{display:flex;flex-wrap:wrap;gap:5px}
+  .tg{font-size:9.5px;font-family:var(--mono);padding:2px 7px;border-radius:4px;max-width:100%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tg.u{color:var(--teal);border:1px solid rgba(9,177,186,.28);background:rgba(9,177,186,.07)}
+  .tg.k{color:var(--violet);border:1px solid rgba(167,139,250,.28);background:rgba(167,139,250,.07)}
+  .tg.p{color:var(--amber);border:1px solid rgba(251,191,36,.28);background:rgba(251,191,36,.07)}
+  .tg.m{color:var(--dim);border:1px solid var(--line);background:var(--bg3)}
+  .tg.x{color:var(--red);border:1px solid rgba(248,113,113,.28);background:rgba(248,113,113,.07)}
+  .empty{font-size:11.5px;color:var(--dim);font-family:var(--mono)}
+
+  .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--dim);
+    font-family:var(--mono);margin-top:13px;padding-top:11px;border-top:1px solid var(--line)}
+
+  /* Terminal */
+  .term{background:#06070a;border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;
+    font-family:var(--mono);font-size:11px;line-height:1.85;height:282px;overflow-y:auto;overflow-x:auto}
+  .term::-webkit-scrollbar{width:4px;height:4px}
+  .term::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+  .ln{display:flex;gap:9px;white-space:pre}
+  .lt{color:var(--dim);flex-shrink:0;user-select:none}
+  .lm.INFO{color:#60a5fa} .lm.SUCCESS{color:var(--green)} .lm.FOUND{color:var(--violet);font-weight:500}
+  .lm.WARN{color:var(--amber)} .lm.ERROR{color:var(--red);font-weight:500}
+
+  /* Annonces */
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(192px,1fr));gap:12px}
+  .it{background:var(--bg3);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    text-decoration:none;color:var(--fg);display:block;transition:border-color .2s,transform .15s;animation:in .4s ease}
+  .it:hover{border-color:rgba(9,177,186,.45);transform:translateY(-2px)}
+  @keyframes in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  .th{width:100%;aspect-ratio:1;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden}
+  .th img{width:100%;height:100%;object-fit:cover;display:block;max-width:100%}
+  .ib{padding:10px}
+  .itt{font-size:11.5px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .im{font-size:10.5px;color:var(--dim);font-family:var(--mono);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ip{font-size:13.5px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums}
+  .ic{display:inline-block;font-size:9.5px;padding:1px 6px;border-radius:4px;margin-top:5px;font-family:var(--mono);
+    background:rgba(9,177,186,.1);color:var(--teal);border:1px solid rgba(9,177,186,.22)}
+  .iq{font-size:9.5px;color:var(--dim);font-family:var(--mono);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  @media(max-width:860px){.stats{grid-template-columns:repeat(3,1fr)}.cols{grid-template-columns:1fr}}
+  @media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">🛍️</div>
+    <div>
+      <h1>Vinted <span>Bot</span></h1>
+      <div class="sub">v6 · flux temps réel</div>
+    </div>
+    <div class="hr">
+      <span id="live">—</span>
+      <div id="pill" class="stopped"><span class="dot"></span><span id="ptxt">Hors ligne</span></div>
+    </div>
+  </header>
+
+  <div id="offline">
+    ⚡ Bot non joignable. Lance <code>python vinted_bot.py</code> puis ouvre <b>http://localhost:8765</b>
+    (ouvrir le fichier HTML directement ne fonctionne pas).
+  </div>
+
+  <div class="sec">Session</div>
+  <div class="stats">
+    <div class="st a"><div class="sv" id="k-found">—</div><div class="sl">trouvées</div></div>
+    <div class="st b"><div class="sv" id="k-sent">—</div><div class="sl">envoyées</div></div>
+    <div class="st c"><div class="sv" id="k-cycle">—</div><div class="sl">cycles</div></div>
+    <div class="st e"><div class="sv" id="k-req">—</div><div class="sl">requêtes</div></div>
+    <div class="st d"><div class="sv" id="k-err">—</div><div class="sl">erreurs</div></div>
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <div class="ct">🔍 Recherches <span class="n" id="scount"></span></div>
+      <div id="slist"><div class="empty">En attente du bot…</div></div>
+      <div class="meta" id="meta" style="display:none">
+        <span>🕐 <b id="m-start">—</b></span>
+        <span>🔄 <b id="m-last">—</b></span>
+        <span>🔀 <b id="m-proxy">—</b></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">📟 Logs <span class="n" id="lcount"></span></div>
+      <div class="term" id="term"><div class="ln"><span class="lt">--:--:--</span><span class="lm INFO">· en attente…</span></div></div>
+    </div>
+  </div>
+
+  <div class="sec">Annonces détectées <span id="icount" style="color:var(--teal);margin-left:5px"></span></div>
+  <div id="grid"><div class="empty" id="iempty">Les nouvelles annonces apparaîtront ici dès qu'elles sont trouvées.</div></div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let lastVersion = -1, lastLogCount = 0, knownIds = new Set(), firstPaint = true;
+
+/* ---------- rendu ---------- */
+function setStatus(st){
+  const p = $('pill');
+  const map = {running:'En cours', paused:'En pause', connecting:'Connexion…', stopped:'Arrêté', error:'Erreur'};
+  p.className = st || 'stopped';
+  $('ptxt').textContent = map[st] || 'Inconnu';
+}
+
+function bump(id, v){
+  const el = $(id);
+  if(!el || el.textContent === String(v)) return;
+  el.textContent = v;
+  el.animate([{transform:'scale(1.18)'},{transform:'scale(1)'}], {duration:190,easing:'ease-out'});
+}
+
+function renderSearches(list){
+  const box = $('slist');
+  $('scount').textContent = list?.length ? `${list.length}` : '';
+  if(!list?.length){ box.innerHTML = '<div class="empty">Aucune recherche configurée.</div>'; return; }
+
+  box.innerHTML = list.map(s => {
+    const on = s.enabled !== false;
+    let tags = '';
+    if(s.url){
+      tags = `<span class="tg u" title="${esc(s.url)}">🔗 ${esc(s.url.replace(/^https?:\/\/(www\.)?/,'').slice(0,46))}…</span>`;
+    } else {
+      if(s.keywords) tags += `<span class="tg k">🔍 ${esc(s.keywords)}</span>`;
+      (s.brands||[]).forEach(b => tags += `<span class="tg k">⬡ ${esc(b)}</span>`);
+      if(s.price_min != null || s.price_max != null)
+        tags += `<span class="tg p">💰 ${s.price_min ?? 0}–${s.price_max ?? '∞'}€</span>`;
+    }
+    if(s.seen) tags += `<span class="tg m">👁 ${s.seen} vues</span>`;
+    if(!on)    tags += `<span class="tg x">désactivée</span>`;
+    return `<div class="srch">
+      <div class="sd ${on?'on':'off'}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="sn">${esc(s.name)}<span class="iv">${s.interval||'?'}s</span></div>
+        <div class="tags">${tags}</div>
+      </div></div>`;
+  }).join('');
+}
+
+function renderLogs(logs){
+  if(!logs || logs.length === lastLogCount) return;
+  lastLogCount = logs.length;
+  $('lcount').textContent = `${logs.length}`;
+  const t = $('term');
+  const stick = t.scrollHeight - t.scrollTop - t.clientHeight < 50;
+  t.innerHTML = logs.map(l =>
+    `<div class="ln"><span class="lt">${esc(l.ts)}</span><span class="lm ${esc(l.level)}">${esc(l.msg)}</span></div>`
+  ).join('');
+  if(stick || firstPaint) t.scrollTop = t.scrollHeight;
+}
+
+function renderItems(items){
+  if(!items) return;
+  $('icount').textContent = items.length ? `(${items.length})` : '';
+  if(!items.length) return;
+  $('iempty')?.remove();
+
+  const grid = $('grid');
+  // On n'insère que les nouvelles cartes, du plus ancien au plus récent
+  const fresh = items.filter(i => !knownIds.has(i.id)).reverse();
+  fresh.forEach(i => {
+    knownIds.add(i.id);
+    const a = document.createElement('a');
+    a.className = 'it';
+    a.href = i.url; a.target = '_blank'; a.rel = 'noopener';
+    const img = i.image
+      ? `<img src="${esc(i.image)}" alt="" loading="lazy" onerror="this.parentElement.textContent='🛍️'">`
+      : '🛍️';
+    const price = i.price > 0 ? `${Number(i.price).toFixed(2)} €` : '—';
+    const cond  = (i.condition && i.condition !== '—') ? `<div class="ic">${esc(i.condition)}</div>` : '';
+    a.innerHTML = `<div class="th">${img}</div><div class="ib">
+      <div class="itt" title="${esc(i.title)}">${esc(i.title)}</div>
+      <div class="im">${esc(i.brand)} · ${esc(i.size)}</div>
+      <div class="ip">${price}</div>${cond}
+      <div class="iq">🕐 ${esc(i.found_at)} · ${esc(i.search)}</div></div>`;
+    grid.insertBefore(a, grid.firstChild);
+  });
+}
+
+function apply(s){
+  if(!s) return;
+  if(s.version === lastVersion) return;
+  lastVersion = s.version;
+
+  $('offline').classList.remove('on');
+  setStatus(s.status);
+  const k = s.stats || {};
+  bump('k-found', k.found ?? 0);
+  bump('k-sent',  k.sent ?? 0);
+  bump('k-cycle', s.cycle ?? 0);
+  bump('k-req',   k.requests ?? 0);
+  bump('k-err',   k.errors ?? 0);
+
+  renderSearches(s.searches);
+  renderLogs(s.logs);
+  renderItems(s.items);
+
+  if(s.started_at){
+    $('meta').style.display = 'flex';
+    $('m-start').textContent = s.started_at;
+    $('m-last').textContent  = s.last_cycle || '—';
+    $('m-proxy').textContent = s.proxy_status || '—';
+  }
+  $('live').textContent = 'màj ' + new Date().toTimeString().slice(0,8);
+  firstPaint = false;
+}
+
+function goOffline(){
+  $('offline').classList.add('on');
+  setStatus('stopped');
+}
+
+/* ---------- transport : SSE, repli sur polling ---------- */
+let es = null, pollTimer = null;
+
+function startSSE(){
+  try{
+    es = new EventSource('/events');
+    es.onmessage = e => { try{ apply(JSON.parse(e.data)); }catch{} };
+    es.onerror = () => {
+      es.close(); es = null;
+      goOffline();
+      setTimeout(startSSE, 3000);   // reconnexion automatique
+    };
+  }catch{
+    startPolling();
+  }
+}
+
+async function startPolling(){
+  if(pollTimer) return;
+  const tick = async () => {
+    try{
+      const r = await fetch('/state?_=' + Date.now());
+      if(!r.ok) throw 0;
+      apply(await r.json());
+    }catch{ goOffline(); }
+  };
+  await tick();
+  pollTimer = setInterval(tick, 2500);
+}
+
+if('EventSource' in window) startSSE(); else startPolling();
+</script>
+</body>
+</html>
