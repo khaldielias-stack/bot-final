@@ -1,0 +1,12 @@
+# Ne jamais embarquer tes données locales dans l'image — sur Railway,
+# ces fichiers vivent sur le Volume monté, pas dans le code.
+config.json
+bot_state.json
+seen_items.json
+
+__pycache__/
+*.pyc
+.git/
+.gitignore
+README.md
+*.md
